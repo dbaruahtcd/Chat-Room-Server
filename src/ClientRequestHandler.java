@@ -24,7 +24,15 @@ public class ClientRequestHandler implements Runnable{
 		this.server = server;
 	}
 	
+	/* 
+	 * This method is used to save to client joining information
+	 */
 	
+	private void joinChatRoom(String chatroomName, String clientName)
+	{
+		ClientInfo client = new ClientInfo(joinID , clientName, socket);
+		server.joinChatRoom(chatroomname, client);
+	}
 	
 	
 	@Override
