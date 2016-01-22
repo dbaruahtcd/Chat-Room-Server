@@ -14,7 +14,7 @@ public class ClientRequestHandler implements Runnable{
 	private InputStreamReader streamIn ;
 	private ChatServer server;
 	private int joinID;
-	private boolean killService;
+	private boolean killServer;
 	
 	
 	public ClientRequestHandler(Socket socket, int joinID, ChatServer server)
@@ -22,6 +22,7 @@ public class ClientRequestHandler implements Runnable{
 		this.socket = socket;
 		this.joinID = joinID;
 		this.server = server;
+		this.killServer = false;
 	}
 	
 	/* 
@@ -31,9 +32,54 @@ public class ClientRequestHandler implements Runnable{
 	private void joinChatRoom(String chatroomName, String clientName)
 	{
 		ClientInfo client = new ClientInfo(joinID , clientName, socket);
-		server.joinChatRoom(chatroomname, client);
+		server.joinChatRoom(chatroomName, client);
 	}
 	
+	//leave chatroom
+	protected void leaveChatRoom(String chatRoomId, String clientId)
+	{
+		int chatRoom = Integer.parseInt(chatRoomId);
+		int client = Integer.parseInt(clientId);
+		server.leaveChatRoom(chatRoom, client);
+	}
+	
+	//chat with the group
+	protected void chat(String chatRoomId, String clientId, String message)
+	{
+		int chatRoom = Integer.parseInt(chatRoomId);
+		int client = Integer. parseInt(clientId);
+		if(!server.chat(chatRoom, client, message)){
+			error(1);
+		}
+	}
+	
+	protected String helloResponse(String command){
+		return command + "\nIP: "+ socket.getLocalAddress().toString().substring(1)+ "\nPort:";
+	}
+	
+	//send an error message back to client
+	protected void error(int error)
+	{
+		try
+		{
+			PrintWriter writer = new PrintWriter(socket.getOutputStream(),true);
+			String errorMessage = "ERROR_CODE" + error + "\nERROR_DESCRIPTION :";
+			String description = "";
+			if(error == 0)
+			{
+				description = "Incorrect Format, Not enough lines \n";
+			}
+			else if( error == 1)
+			{
+				description = "ChatRoom does not exists\n";
+			}
+			writer.println(errorMessage + description);
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
 	
 	@Override
 	public void run() {
@@ -43,7 +89,7 @@ public class ClientRequestHandler implements Runnable{
 			PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
 			ArrayList<String> lines;
 			
-			while(!killService)
+			while(!killServer)
 			{
 				lines = new ArrayList<String>();
 				while(reader.ready())
@@ -63,7 +109,7 @@ public class ClientRequestHandler implements Runnable{
 					String chatroomName = line0[1];
 					String[] line3 = lines.get(3).split(":");
 					String clientName = line3[1];
-					joinChatroom(chatroomName,clientName);
+					joinChatRoom(chatroomName,clientName);
 				}
 				
 				else if(lines.get(0).startsWith("LEAVE_CHATROOM"))
@@ -72,7 +118,7 @@ public class ClientRequestHandler implements Runnable{
 					String chatroomID = line0[1].substring(1);
 					String[] line1 = lines.get(1).split(":");
 					String joinID = line1[1].substring(1);
-					leaveChatroom(chatroomID, joinID);
+					leaveChatRoom(chatroomID, joinID);
 				}
 				
 				else if(lines.get(0).startsWith("CHAT"))
@@ -82,13 +128,13 @@ public class ClientRequestHandler implements Runnable{
 					String[] line1 = lines.get(1).split(":");
 					String joinID = line1[1].substring(1);
 					String[] line3 = lines.get(3).split(":");
-					String[] message = lines3[1].substring(1);
+					String message = line3[1].substring(1);
 					chat(chatroomID, joinID, message);
 				}
 				
 				else if(lines.get(0).startsWith("Hello"))
 				{
-					writer.println(heloResponse(lines.get(0)));
+					writer.println(helloResponse(lines.get(0)));
 				}
 					
 				else if(lines.get(0).startsWith("KILL_SERVICE"))

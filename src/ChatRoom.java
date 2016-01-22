@@ -33,6 +33,21 @@ public class ChatRoom {
 		return clients;
 	}
 	
+	public void setClients(HashMap<Integer, ClientInfo> clients)
+	{
+		this.clients = clients;
+	}
+	
+	public int getRoomRef()
+	{
+		return roomRef;
+	}
+	
+	public void setRoomRef(int roomRef)
+	{
+		this.roomRef= roomRef;
+	}
+	
 	protected void addClient(ClientInfo client)
 	{
 		clients.put(client.getId(),client);
@@ -55,6 +70,7 @@ public class ChatRoom {
 		}
 	}
 	
+	//Send a message to all the clients in the chatroom
 	public void chat(Integer clientId, String message)
 	{
 		Iterator<Entry<Integer, ClientInfo>> iterator = clients.entrySet().iterator();
@@ -67,6 +83,22 @@ public class ChatRoom {
 				ClientInfo receipient = iterator.next().getValue();
 				sendMessage(sendString, receipient);
 			}
+		}
+		else
+		{
+			
+		}
+	}
+	
+	//Remove a client from a chatroom
+	public void removeClient(Integer clientId)
+	{
+		ClientInfo client = clients.get(clientId);
+		if(clients != null)
+		{
+			String left = "LEFT_CHATROOM: "+ roomRef + "\nJOIN_ID: "+ client.getId() + "\n";
+			sendMessage(left, client);
+			clients.remove(clientId);
 		}
 		else
 		{
